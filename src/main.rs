@@ -29,7 +29,7 @@ enum Endiannes {
     BigEndian,
 }
 
-const HEX_PAGESIZE: usize = 1024;
+const HEX_PAGESIZE: usize = 4096;
 
 #[derive(Debug)]
 #[allow(dead_code)]
