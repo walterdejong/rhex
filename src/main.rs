@@ -68,7 +68,7 @@ impl HexView {
         }
         let view_width = 80;
 
-        if terminal_size.1 < 24 {
+        if terminal_size.1 < 10 {
             eprintln!("error: terminal is not high enough");
             process::exit(1);
         }
