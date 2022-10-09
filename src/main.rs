@@ -254,10 +254,19 @@ impl HexView {
     }
 
     fn draw_bottom_pane(&mut self) {
-        let mut linebuf = String::new();
-
         let y = self.view_height; // screen position
         let pos = self.offset + self.cursor_y as u64 * 16 + self.cursor_x as u64;
+
+        self.draw_info_address(y, pos);
+        self.draw_info_i8(y + 1, pos);
+        self.draw_info_i16(y + 2, pos);
+        self.draw_info_i32(y + 3, pos);
+        self.draw_info_i64(y + 4, pos);
+        self.draw_info_f32_f64_and_endianness(y + 5, pos);
+    }
+
+    fn draw_info_address(&mut self, y: u16, pos: u64) {
+        let mut linebuf = String::new();
 
         if self.filesize > u32::MAX as u64 {
             write!(
@@ -280,6 +289,10 @@ impl HexView {
             .queue(style::Print(&linebuf))
             .unwrap();
         linebuf.clear();
+    }
+
+    fn draw_info_i8(&mut self, y: u16, pos: u64) {
+        let mut linebuf = String::new();
 
         if pos < self.filesize {
             let data_i8 = self.at(pos) as i8;
@@ -294,11 +307,15 @@ impl HexView {
             write!(linebuf, "  i8 : {:<20}  u8 : {:<20}  --   ", "--", "--").unwrap();
         }
         self.stdout
-            .queue(cursor::MoveTo(0, y + 1))
+            .queue(cursor::MoveTo(0, y))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
         linebuf.clear();
+    }
+
+    fn draw_info_i16(&mut self, y: u16, pos: u64) {
+        let mut linebuf = String::new();
 
         if pos + 1 < self.filesize {
             let bytes16 = [self.at(pos), self.at(pos + 1)];
@@ -320,13 +337,16 @@ impl HexView {
         } else {
             write!(linebuf, "  i16: {:<20}  u16: {:<20}  --     ", "--", "--").unwrap();
         }
-
         self.stdout
-            .queue(cursor::MoveTo(0, y + 2))
+            .queue(cursor::MoveTo(0, y))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
         linebuf.clear();
+    }
+
+    fn draw_info_i32(&mut self, y: u16, pos: u64) {
+        let mut linebuf = String::new();
 
         let mut f32_value = String::new();
 
@@ -367,17 +387,17 @@ impl HexView {
                 "--", "--",
             )
             .unwrap();
-
-            write!(f32_value, "{}", "--").unwrap();
         }
         self.stdout
-            .queue(cursor::MoveTo(0, y + 3))
+            .queue(cursor::MoveTo(0, y))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
         linebuf.clear();
+    }
 
-        let mut f64_value = String::new();
+    fn draw_info_i64(&mut self, y: u16, pos: u64) {
+        let mut linebuf = String::new();
 
         if pos + 7 < self.filesize {
             let bytes64 = [
@@ -405,6 +425,58 @@ impl HexView {
                 data_i64, data_u64, data_u64
             )
             .unwrap();
+        } else {
+            write!(
+                linebuf,
+                "  i64: {:<20}  u64: {:<20}  --                 ",
+                "--", "--",
+            )
+            .unwrap();
+        }
+        self.stdout
+            .queue(cursor::MoveTo(0, y))
+            .unwrap()
+            .queue(style::Print(&linebuf))
+            .unwrap();
+        linebuf.clear();
+    }
+
+    fn draw_info_f32_f64_and_endianness(&mut self, y: u16, pos: u64) {
+        let mut linebuf = String::new();
+
+        let mut f32_value = String::new();
+
+        if pos + 3 < self.filesize {
+            let bytes32 = [
+                self.at(pos),
+                self.at(pos + 1),
+                self.at(pos + 2),
+                self.at(pos + 3),
+            ];
+            let data_f32;
+            if self.endian == LittleEndian {
+                data_f32 = f32::from_le_bytes(bytes32);
+            } else {
+                data_f32 = f32::from_be_bytes(bytes32);
+            }
+            write!(f32_value, "{:20.20}", PrettyPrintFloat(data_f32 as f64)).unwrap();
+        } else {
+            write!(f32_value, "{}", "--").unwrap();
+        }
+
+        let mut f64_value = String::new();
+
+        if pos + 7 < self.filesize {
+            let bytes64 = [
+                self.at(pos),
+                self.at(pos + 1),
+                self.at(pos + 2),
+                self.at(pos + 3),
+                self.at(pos + 4),
+                self.at(pos + 5),
+                self.at(pos + 6),
+                self.at(pos + 7),
+            ];
 
             let data_f64;
             if self.endian == LittleEndian {
@@ -414,21 +486,8 @@ impl HexView {
             }
             write!(f64_value, "{:20.20}", PrettyPrintFloat(data_f64)).unwrap();
         } else {
-            write!(
-                linebuf,
-                "  i64: {:<20}  u64: {:<20}  --                 ",
-                "--", "--",
-            )
-            .unwrap();
-
             write!(f64_value, "{}", "--").unwrap();
         }
-        self.stdout
-            .queue(cursor::MoveTo(0, y + 4))
-            .unwrap()
-            .queue(style::Print(&linebuf))
-            .unwrap();
-        linebuf.clear();
 
         let s_endian;
         if self.endian == LittleEndian {
@@ -443,7 +502,7 @@ impl HexView {
         )
         .unwrap();
         self.stdout
-            .queue(cursor::MoveTo(0, y + 5))
+            .queue(cursor::MoveTo(0, y))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
