@@ -39,3 +39,10 @@ Keys:
  * press 'l' for little endian
  * press 'b' for big endian
  * press 'q' or Esc to exit
+
+
+
+-----------------------------------
+_Copyright (c) 2022 Walter de Jong <walter@heiho.net>_
+
+This software is freely available under terms described in the MIT license.
