@@ -73,8 +73,8 @@ impl HexView {
             process::exit(1);
         }
         // the hexdump view will be most of the screen
-        // we need 5 lines at the bottom for the info pane
-        let view_height = terminal_size.1 - 5;
+        // we need 6 lines at the bottom for the info pane
+        let view_height = terminal_size.1 - 6;
 
         HexView {
             stdout: stdout(),
@@ -259,6 +259,28 @@ impl HexView {
         let y = self.view_height; // screen position
         let pos = self.offset + self.cursor_y as u64 * 16 + self.cursor_x as u64;
 
+        if self.filesize > u32::MAX as u64 {
+            write!(
+                linebuf,
+                "  @0x{:10x}  {:<10}  @{:<24}  size: {}",
+                pos, " ", pos, self.filesize
+            )
+            .unwrap();
+        } else {
+            write!(
+                linebuf,
+                "  @0x{:08x}  {:<12}  @{:<24}  size: {} ",
+                pos, " ", pos, self.filesize
+            )
+            .unwrap();
+        }
+        self.stdout
+            .queue(cursor::MoveTo(0, y))
+            .unwrap()
+            .queue(style::Print(&linebuf))
+            .unwrap();
+        linebuf.clear();
+
         if pos < self.filesize {
             let data_i8 = self.at(pos) as i8;
             let data_u8 = self.at(pos);
@@ -272,7 +294,7 @@ impl HexView {
             write!(linebuf, "  i8 : {:<20}  u8 : {:<20}  --   ", "--", "--").unwrap();
         }
         self.stdout
-            .queue(cursor::MoveTo(0, y))
+            .queue(cursor::MoveTo(0, y + 1))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
@@ -300,7 +322,7 @@ impl HexView {
         }
 
         self.stdout
-            .queue(cursor::MoveTo(0, y + 1))
+            .queue(cursor::MoveTo(0, y + 2))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
@@ -349,7 +371,7 @@ impl HexView {
             write!(f32_value, "{}", "--").unwrap();
         }
         self.stdout
-            .queue(cursor::MoveTo(0, y + 2))
+            .queue(cursor::MoveTo(0, y + 3))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
@@ -402,7 +424,7 @@ impl HexView {
             write!(f64_value, "{}", "--").unwrap();
         }
         self.stdout
-            .queue(cursor::MoveTo(0, y + 3))
+            .queue(cursor::MoveTo(0, y + 4))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
@@ -421,7 +443,7 @@ impl HexView {
         )
         .unwrap();
         self.stdout
-            .queue(cursor::MoveTo(0, y + 4))
+            .queue(cursor::MoveTo(0, y + 5))
             .unwrap()
             .queue(style::Print(&linebuf))
             .unwrap();
@@ -731,7 +753,7 @@ impl HexView {
         };
 
         let cx = (self.filesize - 1 - end_offset) % 16;
-        let cy = (self.filesize - end_offset) / 16;
+        let cy = (self.filesize - 1 - end_offset) / 16;
         assert!(cy < self.view_height as u64);
 
         if self.offset == end_offset && self.cursor_x as u64 == cx && self.cursor_y as u64 == cy {
