@@ -1,5 +1,5 @@
 /*
-    rhex    WJ120
+    rhex    WJ122
 
     * a rusty hex viewer
 */
